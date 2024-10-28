@@ -1,6 +1,3 @@
-// reading json file
-//d3.json("https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json").then((data) => {
-//});
 
 // Initialize the dashboard
 (function initializeDashboard() {
@@ -9,24 +6,40 @@
     d3.json("https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json").then((data) => {
         data.names.forEach(name => datasetSelector.append("option").text(name).property("value", name));
 
-        const firstSample = data.names[0];
-        updateChartsAndMetadata(firstSample);
+        const Sample1 = data.names[0];
+        updateChartsAndMetadata(Sample1);
     });
 })();
 
-// Update both charts and metadata based on the selected sample
+
+// Filter the metadata for the object with the desired sample number
+function updateMetadata(sample) {
+    d3.json("https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json").then(data => {
+        const Panel = d3.select("#sample-metadata").html("");
+        const sampleMetadata = data.metadata.filter(m => m.id == sample)[0];
+
+        Object.entries(sampleMetadata).forEach(([key, value]) => {
+            Panel.append("h6").text(`${key.toUpperCase()}: ${value}`);
+        });
+
+        createGaugeChart(sampleMetadata.wfreq ?? 0);
+    });
+}
+
+/// Filter the samples for the object with the desired sample number
 function updateChartsAndMetadata(sample) {
     updateCharts(sample);
     updateMetadata(sample);
 }
 
-// Update charts for the provided sample
+// Get the otu_ids, otu_labels, and sample_values
 function updateCharts(sample) {
     d3.json("https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json").then(data => {
-        const selectedSample = data.samples.filter(s => s.id == sample)[0];
+        const selection = data.samples.filter(s => s.id == sample)[0];
 
-        const { otu_ids, otu_labels, sample_values } = selectedSample;
+        const { otu_ids, otu_labels, sample_values } = selection;
 
+        // Render the Bubble Chart
         Plotly.newPlot("bubble", [
             {
                 x: otu_ids,
@@ -45,6 +58,8 @@ function updateCharts(sample) {
             xaxis: { title: "OTU ID" }
         });
 
+
+         // Render the Bar Chart
         Plotly.newPlot("bar", [
             {
                 y: otu_ids.slice(0, 10).map(id => `OTU ${id}`).reverse(),
@@ -59,39 +74,7 @@ function updateCharts(sample) {
     });
 }
 
-// Update metadata for the provided sample
-function updateMetadata(sample) {
-    d3.json("https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json").then(data => {
-        const metadataPanel = d3.select("#sample-metadata").html("");
-        const sampleMetadata = data.metadata.filter(m => m.id == sample)[0];
-
-        Object.entries(sampleMetadata).forEach(([key, value]) => {
-            metadataPanel.append("h6").text(`${key.toUpperCase()}: ${value}`);
-        });
-
-        createGaugeChart(sampleMetadata.wfreq ?? 0);
-    });
-}
-
-// Create a gauge chart (Bonus)
-function createGaugeChart(wfreq) {
-    Plotly.newPlot('gauge', [
-        {
-            domain: { x: [0, 1], y: [0, 1] },
-            value: wfreq,
-            title: { text: "Belly Button Washing Frequency<br>Scrubs per Week" },
-            type: "indicator",
-            mode: "gauge+number",
-            gauge: { axis: { range: [0, 9] } }
-        }
-    ], {
-        width: 600,
-        height: 450,
-        margin: { t: 0, b: 0 }
-    });
-}
-
 // Handle change
-function optionChanged(newSample) {
-    updateChartsAndMetadata(newSample);
+function optionChanged(new_sample) {
+    updateChartsAndMetadata(new_sample);
 }
